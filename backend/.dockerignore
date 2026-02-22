@@ -1,0 +1,35 @@
+# Python / Django ignore
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Database
+db.sqlite3
+*.db
+
+# Django local files
+db.sqlite3
+staticfiles/
+media/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Git
+.git
+.gitignore
+
+# OS specific
+.DS_Store
+Thumbs.db
