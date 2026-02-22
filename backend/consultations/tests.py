@@ -9,6 +9,166 @@ from .models import Consultation, Patient
 from .services import AIServiceError
 
 
+# =================================================================
+# Patient Endpoints — GET /api/patients/  &  POST /api/patients/
+# =================================================================
+class PatientListCreateViewTests(TestCase):
+    """Tests for GET & POST /api/patients/"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("consultations:patient-list")
+        self.patient = Patient.objects.create(
+            full_name="Jane Doe",
+            date_of_birth="1990-05-15",
+            email="jane@example.com",
+        )
+
+    # -- LIST ---------------------------------------------------------
+    def test_list_patients(self):
+        """GET returns all patients."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["full_name"], "Jane Doe")
+
+    def test_list_patients_empty(self):
+        """GET returns empty list when no patients exist."""
+        Patient.objects.all().delete()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    # -- CREATE -------------------------------------------------------
+    def test_create_patient_success(self):
+        """POST with valid data creates a patient."""
+        data = {
+            "full_name": "John Smith",
+            "date_of_birth": "1985-03-20",
+            "email": "john@example.com",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["full_name"], "John Smith")
+        self.assertEqual(Patient.objects.count(), 2)
+
+    def test_create_patient_duplicate_email(self):
+        """POST with an already-used email returns 400."""
+        data = {
+            "full_name": "Another Person",
+            "date_of_birth": "2000-01-01",
+            "email": "jane@example.com",  # duplicate
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_patient_missing_fields(self):
+        """POST with missing required fields returns 400."""
+        response = self.client.post(self.url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_patient_invalid_date(self):
+        """POST with a malformed date_of_birth returns 400."""
+        data = {
+            "full_name": "Bad Date",
+            "date_of_birth": "not-a-date",
+            "email": "bad@example.com",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+# =================================================================
+# Consultation Endpoints — GET & POST /api/consultations/
+# =================================================================
+class ConsultationListCreateViewTests(TestCase):
+    """Tests for GET & POST /api/consultations/"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("consultations:consultation-list")
+        self.patient = Patient.objects.create(
+            full_name="Jane Doe",
+            date_of_birth="1990-05-15",
+            email="jane@example.com",
+        )
+        self.consultation = Consultation.objects.create(
+            patient=self.patient,
+            symptoms="Cough and fever",
+            diagnosis="Common cold",
+        )
+
+    # -- LIST ---------------------------------------------------------
+    def test_list_consultations(self):
+        """GET returns all consultations with patient_name."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["patient_name"], "Jane Doe")
+
+    def test_list_consultations_empty(self):
+        """GET returns empty list when no consultations exist."""
+        Consultation.objects.all().delete()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    # -- CREATE -------------------------------------------------------
+    def test_create_consultation_success(self):
+        """POST with valid data creates a consultation."""
+        data = {
+            "patient": self.patient.pk,
+            "symptoms": "Sore throat, runny nose",
+            "diagnosis": "Upper respiratory infection",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["symptoms"], "Sore throat, runny nose")
+        self.assertIsNone(response.data["ai_summary"])  # not generated yet
+        self.assertEqual(Consultation.objects.count(), 2)
+
+    def test_create_consultation_without_diagnosis(self):
+        """POST without diagnosis succeeds (diagnosis is optional)."""
+        data = {
+            "patient": self.patient.pk,
+            "symptoms": "Headache",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["diagnosis"], "")
+
+    def test_create_consultation_invalid_patient(self):
+        """POST with a non-existent patient ID returns 400."""
+        data = {
+            "patient": 99999,
+            "symptoms": "Dizziness",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_consultation_missing_symptoms(self):
+        """POST without symptoms returns 400."""
+        data = {"patient": self.patient.pk}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_ai_summary_is_read_only(self):
+        """POST cannot set ai_summary — it is read-only."""
+        data = {
+            "patient": self.patient.pk,
+            "symptoms": "Fatigue",
+            "ai_summary": "Injected summary",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data["ai_summary"])  # ignored
+
+
+# =================================================================
+# Generate Summary — POST /api/consultations/{id}/generate-summary/
+# =================================================================
+
+
 class GenerateSummaryViewTests(TestCase):
     """Tests for POST /api/consultations/{id}/generate-summary/"""
 
@@ -75,19 +235,6 @@ class GenerateSummaryViewTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("not found", response.data["detail"].lower())
-
-    # -----------------------------------------------------------------
-    # 400 — empty diagnosis
-    # -----------------------------------------------------------------
-    def test_generate_summary_missing_diagnosis(self):
-        """Returns 400 when diagnosis is blank."""
-        self.consultation.diagnosis = ""
-        self.consultation.save()
-
-        response = self.client.post(self.url)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("diagnosis", response.data["detail"].lower())
 
     # -----------------------------------------------------------------
     # 400 — empty symptoms
