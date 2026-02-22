@@ -144,3 +144,16 @@ CORS_ALLOWED_ORIGINS = config(
 # Default primary key field type
 # =============================================================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =============================================================================
+# AI Provider  (openai | ollama | mock)
+# =============================================================================
+AI_PROVIDER = config("AI_PROVIDER", default="openai")
+
+# — OpenAI
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
+OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
+
+# — Ollama (local)
+OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434/v1")
+OLLAMA_MODEL = config("OLLAMA_MODEL", default="phi3.5:3.8b-mini-instruct-q4_K_M")
