@@ -1,4 +1,4 @@
-<h1 align="center">AI Health Consultant API</h1>
+<h1 align="center">AI Health Consultation Management System</h1>
 
 <div align="center">
   <p><strong>Intelligent AI-powered Health Consultations Platform</strong></p>
@@ -15,7 +15,7 @@
 
 ## 📖 Overview
 
-The **Health Consultant API** is a robust, scalable backend system designed to provide intelligent health consultations. By leveraging **Django REST Framework** and the **OpenAI API**, it intelligently processes user health inquiries, manages consultation lifecycles, and maintains an efficient, containerized PostgreSQL database backend. 
+The **Health Consultant API** is a robust, scalable full-stack system designed to provide intelligent health consultations. By leveraging **Django REST Framework** and the **OpenAI API**, it intelligently processes user health inquiries, manages consultation lifecycles, and maintains an efficient, containerized PostgreSQL database backend. 
 
 ## ✨ Key Features
 
@@ -65,9 +65,9 @@ The recommended way to run the application is using Docker. It will automaticall
 
 *Note: The first time you bring up the containers, `entrypoint.sh` will automatically handle database migrations and static file collection.*
 
-## 💻 Local Development (Without Docker)
+## 💻 Local Development (Without Docker) But Why? 🙂
 
-If you prefer to run the application locally without Docker:
+If you prefer to run the application locally without Docker (IDK why you would prefer this 💀):
 
 1. **Navigate to the backend directory**:
    ```bash
