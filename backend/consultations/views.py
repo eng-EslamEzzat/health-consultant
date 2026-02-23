@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 
 from .models import Consultation, Patient
 from .serializers import ConsultationSerializer, PatientSerializer
-from .services import AIServiceError, generate_consultation_summary
+from .tasks import generate_summary_task
 
 ################################################################
 # For Implementing meaningful error handling (400, 404, etc.)
@@ -57,21 +57,10 @@ class GenerateSummaryView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 3. Call AI service
-        try:
-            summary = generate_consultation_summary(
-                symptoms=consultation.symptoms,
-                diagnosis=consultation.diagnosis,
-            )
-        except AIServiceError as exc:
+        # 3. Trigger background task
+        generate_summary_task.delay(consultation.id)
+
             return Response(
-                {"detail": str(exc)},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            {"detail": "Summary generation started in background."},
+            status=status.HTTP_202_ACCEPTED,
             )
-
-        # 4. Persist and respond
-        consultation.ai_summary = summary
-        consultation.save(update_fields=["ai_summary"])
-
-        serializer = ConsultationSerializer(consultation)
-        return Response(serializer.data, status=status.HTTP_200_OK)
