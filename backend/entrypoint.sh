@@ -16,16 +16,17 @@ except Exception:
 done
 echo "PostgreSQL is ready!"
 
-echo "Applying migrations..."
-python manage.py migrate --noinput
+if [ "$SKIP_MIGRATIONS" != "true" ]; then
+    echo "Applying migrations..."
+    python manage.py migrate --noinput
+    echo "Migrations applied successfully."
+else
+    echo "Skipping migrations (SKIP_MIGRATIONS is set)."
+fi
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
+echo "Static files collected successfully."
 
-echo "Starting Gunicorn..."
-exec gunicorn core.wsgi:application \
-    --bind 0.0.0.0:8000 \
-    --workers 3 \
-    --timeout 120 \
-    --access-logfile - \
-    --error-logfile -
+echo "Starting command: $@"
+exec "$@"

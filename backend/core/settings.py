@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -157,3 +158,27 @@ OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
 # — Ollama (local)
 OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434/v1")
 OLLAMA_MODEL = config("OLLAMA_MODEL", default="phi3.5:3.8b-mini-instruct-q4_K_M")
+
+# =============================================================================
+# Celery
+# =============================================================================
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+# =============================================================================
+# REST Framework & Swagger (drf-spectacular)
+# =============================================================================
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Health Consultant API",
+    "DESCRIPTION": "API for health consultation summaries and management.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}

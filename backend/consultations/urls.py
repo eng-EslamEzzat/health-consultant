@@ -12,6 +12,11 @@ urlpatterns = [
         name="consultation-list",
     ),
     path(
+        "consultations/<int:pk>/",
+        views.ConsultationRetrieveView.as_view(),
+        name="consultation-detail",
+    ),
+    path(
         "consultations/<int:pk>/generate-summary/",
         views.GenerateSummaryView.as_view(),
         name="consultation-generate-summary",
