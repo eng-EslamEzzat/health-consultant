@@ -65,7 +65,7 @@ export async function createConsultation(data: { patient: number; symptoms: stri
     return res.json();
 }
 
-export async function generateAiSummary(id: string | number): Promise<Consultation> {
+export async function generateAiSummary(id: string | number): Promise<{ detail: string }> {
     const res = await fetch(`${getApiUrl()}/consultations/${id}/generate-summary/`, {
         method: 'POST',
     });

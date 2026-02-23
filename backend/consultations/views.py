@@ -31,6 +31,15 @@ class ConsultationListCreateView(generics.ListCreateAPIView):
     serializer_class = ConsultationSerializer
 
 
+class ConsultationRetrieveView(generics.RetrieveAPIView):
+    """
+    GET /api/consultations/{id}/  → get details of a single consultation
+    """
+
+    queryset = Consultation.objects.select_related("patient").all()
+    serializer_class = ConsultationSerializer
+
+
 class GenerateSummaryView(APIView):
     """
     POST /api/consultations/{id}/generate-summary/
@@ -60,7 +69,7 @@ class GenerateSummaryView(APIView):
         # 3. Trigger background task
         generate_summary_task.delay(consultation.id)
 
-            return Response(
+        return Response(
             {"detail": "Summary generation started in background."},
             status=status.HTTP_202_ACCEPTED,
-            )
+        )
