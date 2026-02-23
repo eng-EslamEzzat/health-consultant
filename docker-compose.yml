@@ -14,11 +14,12 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/patients/')"]
-      interval: 10s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
+      interval: 300s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
+      start_interval: 5s
     restart: unless-stopped
 
   frontend:
