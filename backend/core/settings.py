@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -157,3 +158,17 @@ OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
 # — Ollama (local)
 OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434/v1")
 OLLAMA_MODEL = config("OLLAMA_MODEL", default="phi3.5:3.8b-mini-instruct-q4_K_M")
+
+# =============================================================================
+# REST Framework & Swagger (drf-spectacular)
+# =============================================================================
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Health Consultant API",
+    "DESCRIPTION": "API for health consultation summaries and management.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
