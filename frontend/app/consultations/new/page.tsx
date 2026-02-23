@@ -16,7 +16,7 @@ export default function NewConsultationPage() {
         async function loadPatients() {
             try {
                 const data = await fetchPatients();
-                setPatients(data);
+                setPatients(data.results);
             } catch (err) {
                 setError("Failed to load patients. Please try refreshing the page.");
             } finally {

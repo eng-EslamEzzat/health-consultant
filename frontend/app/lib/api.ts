@@ -20,8 +20,15 @@ export interface Consultation {
     ai_summary: string | null;
 }
 
-export async function fetchPatients(): Promise<Patient[]> {
-    const res = await fetch(`${API_URL}/patients/`, { cache: 'no-store' });
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
+export async function fetchPatients(page: number = 1): Promise<PaginatedResponse<Patient>> {
+    const res = await fetch(`${API_URL}/patients/?page=${page}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch patients');
     return res.json();
 }
@@ -36,8 +43,8 @@ export async function createPatient(data: Omit<Patient, 'id'>): Promise<Patient>
     return res.json();
 }
 
-export async function fetchConsultations(): Promise<Consultation[]> {
-    const res = await fetch(`${API_URL}/consultations/`, { cache: 'no-store' });
+export async function fetchConsultations(page: number = 1): Promise<PaginatedResponse<Consultation>> {
+    const res = await fetch(`${API_URL}/consultations/?page=${page}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch consultations');
     return res.json();
 }

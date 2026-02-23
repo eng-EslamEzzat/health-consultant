@@ -26,18 +26,19 @@ class PatientListCreateViewTests(TestCase):
 
     # -- LIST ---------------------------------------------------------
     def test_list_patients(self):
-        """GET returns all patients."""
+        """GET returns all patients in paginated format."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["full_name"], "Jane Doe")
+        self.assertIn("results", response.data)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["full_name"], "Jane Doe")
 
     def test_list_patients_empty(self):
         """GET returns empty list when no patients exist."""
         Patient.objects.all().delete()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
     # -- CREATE -------------------------------------------------------
     def test_create_patient_success(self):
@@ -79,6 +80,52 @@ class PatientListCreateViewTests(TestCase):
 
 
 # =================================================================
+# Patient Pagination Tests
+# =================================================================
+class PatientPaginationTests(TestCase):
+    """Tests for pagination on GET /api/patients/"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("consultations:patient-list")
+        # Create 15 patients to exceed default page_size of 10
+        for i in range(15):
+            Patient.objects.create(
+                full_name=f"Patient {i:02d}",
+                date_of_birth="1990-01-01",
+                email=f"patient{i}@example.com",
+            )
+
+    def test_pagination_default_page_size(self):
+        """First page returns 10 items (default page_size)."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 10)
+        self.assertEqual(response.data["count"], 15)
+
+    def test_pagination_second_page(self):
+        """Second page returns remaining 5 items."""
+        response = self.client.get(self.url, {"page": 2})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 5)
+
+    def test_pagination_custom_page_size(self):
+        """Custom page_size=5 returns 5 items."""
+        response = self.client.get(self.url, {"page_size": 5})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 5)
+
+    def test_pagination_metadata(self):
+        """Response includes count, next, and previous keys."""
+        response = self.client.get(self.url)
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("previous", response.data)
+        self.assertIsNotNone(response.data["next"])  # has page 2
+        self.assertIsNone(response.data["previous"])  # no previous on page 1
+
+
+# =================================================================
 # Consultation Endpoints — GET & POST /api/consultations/
 # =================================================================
 class ConsultationListCreateViewTests(TestCase):
@@ -100,18 +147,19 @@ class ConsultationListCreateViewTests(TestCase):
 
     # -- LIST ---------------------------------------------------------
     def test_list_consultations(self):
-        """GET returns all consultations with patient_name."""
+        """GET returns all consultations with patient_name in paginated format."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["patient_name"], "Jane Doe")
+        self.assertIn("results", response.data)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["patient_name"], "Jane Doe")
 
     def test_list_consultations_empty(self):
         """GET returns empty list when no consultations exist."""
         Consultation.objects.all().delete()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
     # -- CREATE -------------------------------------------------------
     def test_create_consultation_success(self):
@@ -162,6 +210,57 @@ class ConsultationListCreateViewTests(TestCase):
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIsNone(response.data["ai_summary"])  # ignored
+
+
+# =================================================================
+# Consultation Pagination Tests
+# =================================================================
+class ConsultationPaginationTests(TestCase):
+    """Tests for pagination on GET /api/consultations/"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("consultations:consultation-list")
+        self.patient = Patient.objects.create(
+            full_name="Jane Doe",
+            date_of_birth="1990-05-15",
+            email="jane@example.com",
+        )
+        # Create 15 consultations to exceed default page_size of 10
+        for i in range(15):
+            Consultation.objects.create(
+                patient=self.patient,
+                symptoms=f"Symptom set {i}",
+                diagnosis=f"Diagnosis {i}",
+            )
+
+    def test_pagination_default_page_size(self):
+        """First page returns 10 items (default page_size)."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 10)
+        self.assertEqual(response.data["count"], 15)
+
+    def test_pagination_second_page(self):
+        """Second page returns remaining 5 items."""
+        response = self.client.get(self.url, {"page": 2})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 5)
+
+    def test_pagination_custom_page_size(self):
+        """Custom page_size=5 returns 5 items."""
+        response = self.client.get(self.url, {"page_size": 5})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 5)
+
+    def test_pagination_metadata(self):
+        """Response includes count, next, and previous keys."""
+        response = self.client.get(self.url)
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("previous", response.data)
+        self.assertIsNotNone(response.data["next"])  # has page 2
+        self.assertIsNone(response.data["previous"])  # no previous on page 1
 
 
 # =================================================================

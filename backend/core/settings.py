@@ -174,6 +174,8 @@ CELERY_TIMEZONE = TIME_ZONE
 # =============================================================================
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "consultations.pagination.StandardPageNumberPagination",
+    "PAGE_SIZE": 10,
 }
 
 SPECTACULAR_SETTINGS = {

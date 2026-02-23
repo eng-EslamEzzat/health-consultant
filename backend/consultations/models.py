@@ -31,12 +31,12 @@ class Consultation(models.Model):
     ai_summary = models.TextField(null=True, blank=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["created_at"]
         verbose_name = "Consultation"
         verbose_name_plural = "Consultations"
         indexes = [
-            models.Index(fields=["-created_at"], name="idx_consultation_created"),
-            models.Index(fields=["patient", "-created_at"], name="idx_patient_created"),
+            models.Index(fields=["created_at"], name="idx_consultation_created"),
+            models.Index(fields=["patient", "created_at"], name="idx_patient_created"),
         ]
 
     def __str__(self):

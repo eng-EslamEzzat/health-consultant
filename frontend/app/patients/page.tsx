@@ -1,8 +1,18 @@
 import { fetchPatients } from "@/app/lib/api";
 import Link from "next/link";
+import Pagination from "@/app/components/Pagination";
 
-export default async function PatientsPage() {
-    const patients = await fetchPatients();
+const PAGE_SIZE = 10;
+
+export default async function PatientsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ page?: string }>;
+}) {
+    const params = await searchParams;
+    const currentPage = Math.max(1, Number(params.page) || 1);
+    const data = await fetchPatients(currentPage);
+    const totalPages = Math.ceil(data.count / PAGE_SIZE);
 
     return (
         <div className="space-y-6">
@@ -42,14 +52,14 @@ export default async function PatientsPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 bg-white">
-                                    {patients.length === 0 ? (
+                                    {data.results.length === 0 ? (
                                         <tr>
                                             <td colSpan={3} className="py-10 text-center text-sm text-slate-500">
                                                 No patients found. Add your first patient to get started.
                                             </td>
                                         </tr>
                                     ) : (
-                                        patients.map((patient) => (
+                                        data.results.map((patient) => (
                                             <tr key={patient.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
                                                     {patient.full_name}
@@ -65,6 +75,8 @@ export default async function PatientsPage() {
                     </div>
                 </div>
             </div>
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/patients" />
         </div>
     );
 }
