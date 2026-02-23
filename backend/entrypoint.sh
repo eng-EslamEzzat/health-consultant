@@ -18,11 +18,13 @@ echo "PostgreSQL is ready!"
 
 echo "Applying migrations..."
 python manage.py migrate --noinput
+echo "Migrations applied successfully."
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
+echo "Static files collected successfully."
 
-echo "Starting Gunicorn..."
+echo "Starting Gunicorn on 0.0.0.0:8000..."
 exec gunicorn core.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 3 \
