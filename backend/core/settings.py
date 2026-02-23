@@ -26,7 +26,7 @@ DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = config(
     "DJANGO_ALLOWED_HOSTS",
-    default="localhost,127.0.0.1",
+    default="localhost,127.0.0.1,backend",
     cast=Csv(),
 )
 
