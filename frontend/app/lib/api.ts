@@ -13,7 +13,8 @@ export interface Patient {
 
 export interface Consultation {
     id: number;
-    patient: Patient;
+    patient: number;
+    patient_name: string;
     symptoms: string;
     diagnosis: string;
     created_at: string;
@@ -43,8 +44,12 @@ export async function createPatient(data: Omit<Patient, 'id'>): Promise<Patient>
     return res.json();
 }
 
-export async function fetchConsultations(page: number = 1): Promise<PaginatedResponse<Consultation>> {
-    const res = await fetch(`${API_URL}/consultations/?page=${page}`, { cache: 'no-store' });
+export async function fetchConsultations(page: number = 1, patientId?: string | number): Promise<PaginatedResponse<Consultation>> {
+    let url = `${API_URL}/consultations/?page_size=9&page=${page}`;
+    if (patientId) {
+        url += `&patient=${patientId}`;
+    }
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch consultations');
     return res.json();
 }

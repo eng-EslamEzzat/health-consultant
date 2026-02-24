@@ -21,6 +21,8 @@ class PatientListCreateView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
 
 
+from .filters import ConsultationFilter
+
 class ConsultationListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/consultations/  → list all consultations
@@ -29,6 +31,7 @@ class ConsultationListCreateView(generics.ListCreateAPIView):
 
     queryset = Consultation.objects.select_related("patient").all()
     serializer_class = ConsultationSerializer
+    filterset_class = ConsultationFilter
 
 
 class ConsultationRetrieveView(generics.RetrieveAPIView):

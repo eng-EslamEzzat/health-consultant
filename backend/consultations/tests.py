@@ -386,3 +386,63 @@ class GenerateSummaryViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.consultation.refresh_from_db()
         self.assertEqual(self.consultation.ai_summary, new_summary)
+
+# =================================================================
+# Consultation Filtering Tests
+# =================================================================
+class ConsultationFilterTests(TestCase):
+    """Tests for filtering consultations by patient ID."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("consultations:consultation-list")
+        
+        # Create 2 patients
+        self.patient1 = Patient.objects.create(
+            full_name="Patient One",
+            date_of_birth="1990-01-01",
+            email="p1@example.com"
+        )
+        self.patient2 = Patient.objects.create(
+            full_name="Patient Two",
+            date_of_birth="1992-02-02",
+            email="p2@example.com"
+        )
+        
+        # Create 3 consultations for patient 1
+        for i in range(3):
+            Consultation.objects.create(
+                patient=self.patient1,
+                symptoms=f"Symptoms P1-{i}",
+                diagnosis="Diagnosis"
+            )
+            
+        # Create 2 consultations for patient 2
+        for i in range(2):
+            Consultation.objects.create(
+                patient=self.patient2,
+                symptoms=f"Symptoms P2-{i}",
+                diagnosis="Diagnosis"
+            )
+
+    def test_filter_by_patient_id(self):
+        """Filtering by ?patient=ID returns only that patient's consultations."""
+        # Filter for patient 1
+        response = self.client.get(self.url, {"patient": self.patient1.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 3)
+        for item in response.data["results"]:
+            self.assertEqual(item["patient"], self.patient1.id)
+
+        # Filter for patient 2
+        response = self.client.get(self.url, {"patient": self.patient2.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 2)
+        for item in response.data["results"]:
+            self.assertEqual(item["patient"], self.patient2.id)
+
+    def test_filter_by_non_existent_patient(self):
+        """Filtering by a non-existent patient ID returns 0 results."""
+        response = self.client.get(self.url, {"patient": 9999})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 0)

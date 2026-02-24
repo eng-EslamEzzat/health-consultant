@@ -63,7 +63,7 @@ export default function ConsultationCard({ initialConsultation }: { initialConsu
                     )}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 truncate mb-4">
-                    {consultation.patient.full_name}
+                    {consultation.patient_name}
                 </h3>
 
                 <div className="space-y-4 flex-grow">
